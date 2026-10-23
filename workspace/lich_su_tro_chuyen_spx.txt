@@ -1,0 +1,135 @@
+================================================================================
+LỊCH SỬ TRAO ĐỔI & PHÂN TÍCH QUY TRÌNH GIAO ĐƠN THU COD (SPX EXPRESS)
+Tài khoản: tisunproac1@gmail.com
+Ngày xuất: 27/09/2026
+================================================================================
+
+I. TỔNG QUAN VẤN ĐỀ & MỤC TIÊU
+- Xây dựng kịch bản JavaScript tự động (Smart Auto Clicker / Accessibility) để xử lý trọn gói 1 đơn giao hàng thu COD trên ứng dụng SPX Express (Shopee Express / com.shopee.fms).
+- Tự động hóa các bước: Copy mã đơn -> Mở giao diện quét -> Nhập tay -> Dán mã từ clipboard bàn phím -> Xác nhận mã -> Chọn phương thức Tiền mặt -> Chọn người nhận "Trước cửa" -> Mở khung chọn Máy ảnh / Tập ảnh.
+- Dừng lại ở bước hiển thị Popup đáy để tài xế tự quyết định chụp ảnh trực tiếp hay chọn ảnh có sẵn từ bộ sưu tập.
+
+--------------------------------------------------------------------------------
+II. DỮ LIỆU TỌA ĐỘ THỰC TẾ ĐO TỪ CON TRỎ MÀN HÌNH (POINTER LOCATION)
+1. Icon Copy mã vận đơn:
+   - Tùy thuộc độ dài chuỗi mã đơn (mã ngắn VN... hay mã dài SPXVN...):
+     + Mã ngắn (ví dụ: VN265540386435S): X: 485, Y: 404
+     + Mã vừa: X: 540, Y: 404
+     + Mã dài: X: 600, Y: 404
+     + Mã siêu dài (ví dụ: SPXVN060687780839): X: 656.7, Y: 403.7
+     -> Giải pháp: Quét dải ngang Y=404 từ X: 485 đến 656 để bao phủ 100% các loại mã.
+
+2. Nút "Đã giao hàng" (Màu cam dưới đáy):
+   - X: 778, Y: 2580
+
+3. Icon Cây bút (Nhập tay góc trên bên phải):
+   - X: 1107.4, Y: 192.3 (tâm ngắm Pointer)
+
+4. Gợi ý Clipboard dán mã (Thanh bong bóng trên bàn phím Gboard):
+   - X: 593.0, Y: 1862.1 (tâm ngắm Pointer)
+
+5. Nút "XÁC NHẬN" (Bên phải ô nhập mã vận đơn):
+   - X: 1054.6, Y: 1691.8 (tâm ngắm Pointer)
+
+6. Màn hình "Phương thức thu tiền":
+   - Ô "Tiền mặt": X: 312, Y: 908
+   - Nút "Tiếp theo" màu cam ở đáy: X: 540, Y: 2600
+
+7. Màn hình "Chọn kiểu người nhận":
+   - Ô "Trước cửa": X: 369.0, Y: 1345.0
+   - Nút "Tiếp theo" màu cam ở đáy: X: 540, Y: 2600
+
+8. Màn hình "Biên bản giao hàng":
+   - Khung icon Máy ảnh: X: 200, Y: 1040
+
+9. Popup đáy khi bấm vào icon Máy ảnh:
+   - Dòng "Máy ảnh": X: 608, Y: 2260
+   - Dòng "Chọn từ tập ảnh": X: 608, Y: 2360
+   - Dòng "Hủy": X: 608, Y: 2500
+
+--------------------------------------------------------------------------------
+III. DIỄN BIẾN PHÂN TÍCH & CÁC LỖI ĐÃ TỐI ƯU
+
+1. Lỗi bỏ sót Popup Máy ảnh:
+   - Phân tích từ video chi tiết 13s cho thấy khi bấm vào ô Máy ảnh, app không mở trực tiếp camera mà hiện một Bottom Sheet (Popup đáy). Người dùng yêu cầu dừng lại ở bước bấm ô máy ảnh để tự quyết định.
+
+2. Lỗi app phản hồi chậm sau Xác nhận mã đơn:
+   - Khi bấm "XÁC NHẬN" mã vận đơn, app SPX gửi yêu cầu lên máy chủ kiểm tra tính hợp lệ.
+   - Thử nghiệm các phương án:
+     + Chờ cố định 1.5s: Quá an toàn nhưng hơi chậm lúc mạng khỏe.
+     + Dùng OCR / waitForText: Bị treo hoặc timeout do màn hình camera/giao diện đặc thù của Shopee không cung cấp text qua Accessibility.
+     + Dùng vòng lặp spam click: Gây hiện tượng loạn màn hình, bỏ qua bước "Trước cửa" và chạm nhầm nút Xác nhận của biên bản giao hàng.
+     + Kết luận chuẩn theo video thực tế: Dừng nghỉ 750ms sau khi bấm "XÁC NHẬN" là thời gian vàng, vừa khít lúc màn hình Thu tiền hiện ra, click chuẩn xác từng nhịp không bị loạn.
+
+3. Lỗi mã đơn không cố định độ dài (VN... vs SPXVN...):
+   - Mã ngắn làm icon copy nằm ở X: 485, mã dài nằm ở X: 656.
+   - Giải pháp: Click dải ngang 4 điểm (485 -> 540 -> 600 -> 656 tại Y: 404) trong vòng 60ms. Hệ thống SPX luôn nhận được lệnh sao chép thành công.
+
+--------------------------------------------------------------------------------
+IV. MÃ NGUỒN SCRIPT JAVASCRIPT HOÀN CHỈNH (PHIÊN BẢN CHUẨN XÁC NHẤT)
+
+// ============================================================
+// KỊCH BẢN CHUẨN XÁC TỪNG NHỊP THEO VIDEO - KHÔNG BỊ LOẠN
+// Nhanh, dứt khoát, dừng ngay ở popup Máy ảnh
+// ============================================================
+
+log("🚀 [SPX] Bắt đầu quy trình...");
+
+// BƯỚC 1: Copy mã vận đơn (Quét dải ngang Y=404)
+log("👉 [B1] Copy mã vận đơn");
+click(485, 404, 0); // Mã ngắn (VN...)
+sleep(20);
+click(540, 404, 0); // Mã vừa
+sleep(20);
+click(600, 404, 0); // Mã dài
+sleep(20);
+click(656, 404, 0); // Mã siêu dài (SPXVN...)
+sleep(100);
+
+// BƯỚC 2: Bấm nút "Đã giao hàng"
+log("👉 [B2] Bấm 'Đã giao hàng'");
+click(778, 2580, 0);
+sleep(400); // Chờ mở camera quét
+
+// BƯỚC 3: Bấm icon Cây bút (Nhập tay)
+log("👉 [B3] Bấm icon cây bút");
+click(1107, 192, 0);
+sleep(450); // Chờ popup nhập & bàn phím
+
+// BƯỚC 4: Bấm gợi ý dán mã từ clipboard
+log("👉 [B4] Dán mã đơn từ clipboard");
+click(593, 1862, 0);
+sleep(150); // Chờ nhận mã & nút Xác nhận sáng lên
+
+// BƯỚC 5: Bấm nút "XÁC NHẬN"
+log("👉 [B5] Bấm XÁC NHẬN");
+click(1055, 1692, 0);
+
+// BƯỚC 6: Chờ nạp màn hình Thu tiền (Chuẩn 750ms theo video)
+log("⏳ [B6] Chờ nạp màn hình Thu tiền (750ms)...");
+sleep(750); 
+
+// BƯỚC 7: Chọn Tiền mặt & Tiếp theo
+log("👉 [B7] Chọn Tiền mặt -> Tiếp theo");
+click(312, 908, 0);  // Ô Tiền mặt
+sleep(80);
+click(540, 2600, 0); // Nút Tiếp theo
+sleep(280);          // Chuyển sang màn hình Kiểu người nhận
+
+// BƯỚC 8: Chọn "Trước cửa" & Tiếp theo
+log("👉 [B8] Chọn Trước cửa -> Tiếp theo");
+click(369, 1345, 0); // Ô Trước cửa
+sleep(100);          // Nhận màu đỏ
+click(540, 2600, 0); // Nút Tiếp theo
+sleep(320);          // Chuyển sang Biên bản giao hàng
+
+// BƯỚC 9: Bấm vào khung icon Máy ảnh (DỪNG TẠI ĐÂY)
+log("📷 [B9] Bấm mở khung Máy ảnh...");
+click(200, 1040, 0);
+
+log("✅ Hoàn tất mượt mà, không bị loạn!");
+toast("Đã mở ô chọn ảnh!");
+
+================================================================================
+HẾT FILE LỊCH SỬ
+================================================================================

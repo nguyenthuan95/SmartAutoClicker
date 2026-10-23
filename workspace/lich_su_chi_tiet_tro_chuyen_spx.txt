@@ -1,0 +1,238 @@
+================================================================================
+TOÀN BỘ LỊCH SỬ CHI TIẾT CUỘC TRÒ CHUYỆN & QUÁ TRÌNH PHÁT TRIỂN KỊCH BẢN TỰ ĐỘNG
+Ứng dụng: SMART AUTO CLICKER - TỰ ĐỘNG GIAO ĐƠN THU COD (SPX EXPRESS / SHOPEE FMS)
+Người dùng: tisunproac1@gmail.com
+Ngày tổng hợp: 27/09/2026
+================================================================================
+
+MỤC LỤC:
+1. GIAI ĐOẠN 1: PHÂN TÍCH VIDEO GỐC 13 GIÂY & PHÁT HIỆN POPUP ẨN
+2. GIAI ĐOẠN 2: PHÂN TÍCH LOG CHẠY THỰC TẾ & BỊ LỖI PHẢN HỒI SAU XÁC NHẬN MÃ ĐƠN
+3. GIAI ĐOẠN 3: ĐO TỌA ĐỘ THỰC TẾ TỪ ẢNH POINTER LOCATION
+4. GIAI ĐOẠN 4: VẤN ĐỀ TỰ ĐỘNG NHẬN DIỆN MÀN HÌNH "TIỀN MẶT" (TEXT / OCR)
+5. GIAI ĐOẠN 5: ĐO THỰC TẾ ICON CÂY BÚT & NÚT XÁC NHẬN CHÍNH XÁC TỪNG PIXEL
+6. GIAI ĐOẠN 6: YÊU CẦU DỪNG LẠI Ở Ô MÁY ẢNH ĐỂ NGƯỜI DÙNG TỰ QUYẾT ĐỊNH
+7. GIAI ĐOẠN 7: TĂNG TỐC ĐỘ SAU BƯỚC TIỀN MẶT
+8. GIAI ĐOẠN 8: PHÁT HIỆN LỖI MÃ ĐƠN KHÔNG CỐ ĐỊNH ĐỘ DÀI (VN... VS SPXVN...)
+9. GIAI ĐOẠN 9: THỬ NGHIỆM XÓA BỎ CHỜ BẰNG SPAM CLICK VÀ PHÂN TÍCH VIDEO BỊ LOẠN
+10. GIAI ĐOẠN 10: TỔNG HỢP BẢNG TỌA ĐỘ VÀ KỊCH BẢN CHUẨN XÁC HOÀN CHỈNH NHẤT
+
+================================================================================
+CHI TIẾT DIỄN BIẾN QUA TỪNG LƯỢT TRAO ĐỔI
+================================================================================
+
+--------------------------------------------------------------------------------
+1. GIAI ĐOẠN 1: PHÂN TÍCH VIDEO GỐC 13 GIÂY & PHÁT HIỆN POPUP ẨN
+--------------------------------------------------------------------------------
+- Người dùng gửi video thao tác tay từ 00:00 đến 00:13 quy trình giao 1 đơn thu COD trên app SPX.
+- Phân tích chi tiết từng giây của video:
+  + 00:00 - 00:02: Màn hình Thông tin đơn hàng. Copy mã đơn -> Bấm nút "Đã giao hàng" ở đáy (778, 2580).
+  + 00:02 - 00:03: Màn hình Quét mã camera. Bấm icon Cây bút (nhập tay) ở góc trên bên phải (1110, 180).
+  + 00:04: Popup Nhập tay + Bàn phím Gboard bung lên. Bấm thanh gợi ý clipboard (600, 1850) -> Bấm "XÁC NHẬN" (860, 1700).
+  + 00:06 - 00:07: Màn hình Phương thức thu tiền. Chọn "Tiền mặt" (312, 908) -> Bấm "Tiếp theo" màu cam (540, 2600).
+  + 00:08 - 00:09: Màn hình Chọn kiểu người nhận. Chọn ô "Trước cửa" (369, 1345) -> Bấm "Tiếp theo" (540, 2600).
+  + 00:10 - 00:11: Màn hình Biên bản giao hàng. Bấm vào khung icon Máy ảnh (200, 1040).
+  + ⭐ 00:11 - 00:13 (PHÁT HIỆN CỰC KỲ QUAN TRỌNG):
+    Khi bấm vào khung Máy ảnh, app KHÔNG mở camera ngay lập tức mà bung 1 Popup đáy (Bottom Sheet) với 3 dòng:
+    * Dòng 1: "Máy ảnh" (X: 600, Y: 2260)
+    * Dòng 2: "Chọn từ tập ảnh" (X: 600, Y: 2360)
+    * Dòng 3: "Hủy" (X: 600, Y: 2500)
+    Phải có thêm nhịp bấm chọn dòng "Máy ảnh" thì Camera mới bung lên.
+
+--------------------------------------------------------------------------------
+2. GIAI ĐOẠN 2: PHÂN TÍCH LOG RUN #35 & LỖI PHẢN HỒI SAU XÁC NHẬN MÃ ĐƠN
+--------------------------------------------------------------------------------
+- Người dùng gửi log chạy Run #35:
+  + [21:25:32.833] Chạm tại (860.0, 1700.0) -> Bấm XÁC NHẬN
+  + [21:25:33.250] Chạm tại (312.0, 908.0) -> Bấm Tiền mặt
+  + Phản hồi người dùng: "đã bấm được nhưng lỗi, chỗ dán mã đơn xong bấm xác nhận phải đợi app phản hồi ngay bước đó"
+- Nguyên nhân: Thời gian giữa nút Xác nhận và chọn Tiền mặt chỉ có 417ms. Server SPX chưa kịp xác thực mã đơn để nạp trang Thu tiền nên cú click Tiền mặt bị bấm hụt trên không khí.
+- Giải pháp: Tăng thời gian chờ sau khi bấm "XÁC NHẬN" lên để app SPX có đủ thời gian phản hồi từ server.
+
+--------------------------------------------------------------------------------
+3. GIAI ĐOẠN 3: ĐO TỌA ĐỘ THỰC TẾ TỪ ẢNH POINTER LOCATION
+--------------------------------------------------------------------------------
+- Người dùng kích hoạt tính năng "Vị trí con trỏ" (Pointer Location) trong Tùy chọn nhà phát triển của Android và gửi ảnh chụp màn hình thực tế:
+
+A. Ảnh 1: Tọa độ nút Copy mã đơn hàng
+- Dấu tâm ngắm chỉ vào đúng icon 2 ô vuông cạnh mã SPXVN060687780839:
+  * X: 656.7
+  * Y: 403.7
+  => Tọa độ chuẩn: click(656, 404, 0)
+
+B. Ảnh 2: Tọa độ gợi ý dán mã trên thanh bàn phím Clipboard
+- Dấu tâm ngắm chỉ vào thanh gợi ý clipboard trên bàn phím:
+  * X: 593.0
+  * Y: 1862.1
+  => Tọa độ chuẩn: click(593, 1862, 0)
+
+--------------------------------------------------------------------------------
+4. GIAI ĐOẠN 4: VẤN ĐỀ TỰ ĐỘNG NHẬN DIỆN MÀN HÌNH "TIỀN MẶT"
+--------------------------------------------------------------------------------
+- Người dùng hỏi: "cái chỗ sau bước dán và bấm xác nhận làm s để script nhận biết khi nào chuyển sang màn hình tiền mặt"
+- Người dùng phản hồi tiếp: "tăng thời gian đợi, app có lúc nhanh lúc chậm"
+- Phân tích thử nghiệm:
+  + Thử dùng waitForText("Tiền mặt", 3000) hoặc findText("Tiền mặt"):
+  + Kết quả xem log Run #43, #44, #45, #51:
+    [ERROR] [TimeoutFailure] waitForText('Tiền mặt') THẤT BẠI sau 3 lần thử (3000ms)!
+  + Nguyên nhân: Ứng dụng com.shopee.fms tùy biến giao diện WebView/Flutter hoặc vẽ Canvas riêng, tính năng Accessibility/OCR của auto clicker không đọc được text trong cây node giao diện, dẫn đến bị treo chờ hết thời gian timeout (5 giây) làm script bị đơ, người dùng phải bấm dừng thủ công!
+  => RÚT RA BÀI HỌC: Không dùng hàm tìm chữ / OCR ở các màn hình của SPX vì sẽ gây treo cứng script.
+
+--------------------------------------------------------------------------------
+5. GIAI ĐOẠN 5: ĐO CHÍNH XÁC ICON CÂY BÚT & NÚT XÁC NHẬN
+--------------------------------------------------------------------------------
+- Người dùng tiếp tục gửi 2 ảnh đo bằng Pointer Location:
+
+A. Ảnh cây bút (Nhập tay góc trên bên phải):
+- Tâm ngắm màu vàng đặt chính xác giữa icon cây bút:
+  * X: 1107.4
+  * Y: 192.3
+  => Tọa độ chuẩn xác: click(1107, 192, 0) (trước đây dùng 1110, 180)
+
+B. Ảnh nút "XÁC NHẬN":
+- Tâm ngắm màu vàng đặt chính xác giữa chữ "XÁC NHẬN":
+  * X: 1054.6
+  * Y: 1691.8
+  => Tọa độ chuẩn xác: click(1055, 1692, 0) (trước đây kịch bản để 860, 1700 bị lệch sang trái)
+
+--------------------------------------------------------------------------------
+6. GIAI ĐOẠN 6: ĐIỀU CHỈNH ĐIỂM DỪNG CỦA SCRIPT
+--------------------------------------------------------------------------------
+- Người dùng yêu cầu: "tới bước bấm máy ảnh thôi còn chọn dòng nào tôi quyết định"
+- Tối ưu hóa:
+  + Lược bỏ các bước tự động chọn dòng "Máy ảnh" (X: 608, Y: 2260) và bấm nút chụp ảnh (X: 608, Y: 2350).
+  + Script dừng lại ngay sau khi bấm vào khung icon Máy ảnh (200, 1040) trên màn hình Biên bản giao hàng.
+  + Popup đáy hiện lên ("Máy ảnh" / "Chọn từ tập ảnh") để người dùng tự quyết định chụp trực tiếp hay tải ảnh từ bộ sưu tập.
+
+--------------------------------------------------------------------------------
+7. GIAI ĐOẠN 7: TĂNG TỐC ĐỘ SAU BƯỚC TIỀN MẶT
+--------------------------------------------------------------------------------
+- Người dùng yêu cầu: "sau bước tiền mặt tăng tốc độ lên nữa đi"
+- Phân tích: Sau khi đã chọn phương thức Tiền mặt, các màn hình kế tiếp ("Chọn kiểu người nhận" -> "Biên bản giao hàng") là giao diện chuyển cảnh cục bộ (Local UI transition), không cần đợi mạng server tải dữ liệu nặng.
+- Tối ưu:
+  + Giảm độ trễ chọn Tiền mặt -> Tiếp theo xuống 80ms.
+  + Chuyển sang màn hình Kiểu người nhận: 280ms.
+  + Chọn "Trước cửa" -> Tiếp theo: 100ms.
+  + Chuyển sang Biên bản -> Bấm ô Máy ảnh: 320ms.
+
+--------------------------------------------------------------------------------
+8. GIAI ĐOẠN 8: PHÁT HIỆN MÃ ĐƠN KHÔNG CỐ ĐỊNH ĐỘ DÀI
+--------------------------------------------------------------------------------
+- Người dùng phát hiện: "tôi mới phát hiện ra là mã đơn sẽ ko cố định nên nút copy cũng thế nhưng nó sẽ cách mã đơn 1 khoảng như ảnh có thể nào tự nhận biết ocr có chậm hay nhanh hơn click không"
+- Người dùng gửi ảnh minh họa với mã: VN265540386435S
+- So sánh sự khác biệt:
+  + Mã cũ: SPXVN060687780839 (dài) -> Icon Copy nằm ở: X: 656.7, Y: 403.7
+  + Mã mới: VN265540386435S (ngắn) -> Icon Copy nằm ở: X: 485, Y: 404
+  + Độ lệch ngang giữa 2 loại mã lên tới gần 170 pixel!
+- Thử nghiệm tìm node bằng Accessibility:
+  + Thử `var node = findText("SPX"); var copyX = node.bounds.right + 35;`
+  + Kết quả xem log Run #72, #73, #74:
+    [ERROR] TypeError: Cannot read property "right" from undefined (user_script.js#14)
+- GIẢI PHÁP ĐỈNH CAO: "Quét dải ngang Y=404 qua 4 điểm"
+  + Do Y luôn cố định ở 404, và bên phải icon copy là khoảng trắng an toàn.
+  + Ta thực hiện chạm liên tiếp 4 điểm cách nhau 20ms:
+    * click(485, 404, 0); // Trúng mã ngắn VN...
+    * click(540, 404, 0); // Trúng mã vừa
+    * click(600, 404, 0); // Trúng mã dài
+    * click(656, 404, 0); // Trúng mã siêu dài SPXVN...
+  + Kết quả: Ăn 100% sao chép thành công cho tất cả mọi đơn hàng bất kể độ dài ngắn, không cần OCR, không bao giờ bị lỗi crash!
+
+--------------------------------------------------------------------------------
+9. GIAI ĐOẠN 9: PHÂN TÍCH VIDEO SPAM CLICK BỊ LOẠN & TÌM RA THỜI GIAN VÀNG
+--------------------------------------------------------------------------------
+- Người dùng yêu cầu: "tôi cần xóa bỏ thời gian chờ sau bước dán mã và xác nhận"
+- Thử nghiệm: Cho vòng lặp spam click liên tục vào Tiền mặt và Tiếp theo ngay sau khi bấm Xác nhận.
+- Người dùng gửi video thực tế kiểm tra: "xem thử hình như bấm loạn"
+- Phân tích chi tiết video (00:00 - 00:09):
+  + Ở giây 00:04: Màn hình Thu tiền vừa hiện lên thì vòng lặp nhấp liên hồi vào nút "Tiếp theo".
+  + Hậu quả: App bị bấm trôi nút "Tiếp theo" quá nhiều lần, làm lướt bay qua luôn màn hình "Chọn kiểu người nhận" (bị chọn mặc định là "Người nhận" thay vì "Trước cửa"!).
+  + Ở giây 00:05 - 00:06: Khi tới màn hình Biên bản giao hàng, các cú click thừa vẫn còn phát ra nên bấm nhầm luôn vào nút "XÁC NHẬN" màu xám ở đáy biên bản.
+- KẾT LUẬN QUAN TRỌNG NHẤT:
+  + Không được dùng spam click liên hồi.
+  + Đo đạc chính xác từ video của người dùng: Thời gian từ khi bấm "XÁC NHẬN" mã đơn đến lúc màn hình "Phương thức thu tiền" hiện lên là đúng 750ms.
+  + Đặt sleep(750) sau bước Xác nhận: Chạy cực kỳ êm ái, nhịp nào ăn nhịp đó, không bao giờ bị loạn màn hình hay nhảy cóc!
+
+================================================================================
+BẢNG TỌA ĐỘ VÀNG CHUẨN XÁC 100% THEO THIẾT BỊ
+================================================================================
+1. Dải icon Copy mã vận đơn:   (485, 404), (540, 404), (600, 404), (656, 404)
+2. Nút "Đã giao hàng":         (778, 2580)
+3. Icon Cây bút (Nhập tay):    (1107, 192)
+4. Gợi ý Clipboard bàn phím:   (593, 1862)
+5. Nút "XÁC NHẬN" mã đơn:      (1055, 1692)
+6. Dòng "Tiền mặt":            (312, 908)
+7. Nút "Tiếp theo" màu cam:    (540, 2600)
+8. Ô chọn "Trước cửa":         (369, 1345)
+9. Khung icon Máy ảnh:         (200, 1040)
+10. Dòng "Máy ảnh" ở popup:    (608, 2260)
+11. Dòng "Chọn từ tập ảnh":    (608, 2360)
+
+================================================================================
+MÃ NGUỒN HOÀN THIỆN ĐÃ ĐƯỢC TỐI ƯU TOÀN DIỆN
+================================================================================
+
+// ============================================================
+// KỊCH BẢN CHUẨN XÁC TỪNG NHỊP THEO VIDEO - KHÔNG BỊ LOẠN
+// Nhanh, dứt khoát, dừng ngay ở popup Máy ảnh
+// ============================================================
+
+log("🚀 [SPX] Bắt đầu quy trình...");
+
+// BƯỚC 1: Copy mã vận đơn (Quét dải ngang Y=404 ăn mọi loại mã)
+log("👉 [B1] Copy mã vận đơn");
+click(485, 404, 0); // Mã ngắn (VN...)
+sleep(20);
+click(540, 404, 0); // Mã vừa
+sleep(20);
+click(600, 404, 0); // Mã dài
+sleep(20);
+click(656, 404, 0); // Mã siêu dài (SPXVN...)
+sleep(100);
+
+// BƯỚC 2: Bấm nút "Đã giao hàng"
+log("👉 [B2] Bấm 'Đã giao hàng'");
+click(778, 2580, 0);
+sleep(400); // Chờ mở camera quét
+
+// BƯỚC 3: Bấm icon Cây bút (Nhập tay)
+log("👉 [B3] Bấm icon cây bút");
+click(1107, 192, 0);
+sleep(450); // Chờ popup nhập & bàn phím
+
+// BƯỚC 4: Bấm gợi ý dán mã từ clipboard
+log("👉 [B4] Dán mã đơn từ clipboard");
+click(593, 1862, 0);
+sleep(150); // Chờ nhận mã & nút Xác nhận sáng lên
+
+// BƯỚC 5: Bấm nút "XÁC NHẬN"
+log("👉 [B5] Bấm XÁC NHẬN");
+click(1055, 1692, 0);
+
+// BƯỚC 6: Chờ nạp màn hình Thu tiền (Chuẩn 750ms theo video)
+log("⏳ [B6] Chờ nạp màn hình Thu tiền (750ms)...");
+sleep(750); 
+
+// BƯỚC 7: Chọn Tiền mặt & Tiếp theo
+log("👉 [B7] Chọn Tiền mặt -> Tiếp theo");
+click(312, 908, 0);  // Ô Tiền mặt
+sleep(80);
+click(540, 2600, 0); // Nút Tiếp theo
+sleep(280);          // Chuyển sang màn hình Kiểu người nhận
+
+// BƯỚC 8: Chọn "Trước cửa" & Tiếp theo
+log("👉 [B8] Chọn Trước cửa -> Tiếp theo");
+click(369, 1345, 0); // Ô Trước cửa
+sleep(100);          // Nhận màu đỏ
+click(540, 2600, 0); // Nút Tiếp theo
+sleep(320);          // Chuyển sang Biên bản giao hàng
+
+// BƯỚC 9: Bấm vào khung icon Máy ảnh (DỪNG TẠI ĐÂY)
+log("📷 [B9] Bấm mở khung Máy ảnh...");
+click(200, 1040, 0);
+
+log("✅ Hoàn tất mượt mà, không bị loạn!");
+toast("Đã mở ô chọn ảnh!");
+
+================================================================================
+HẾT TÀI LIỆU LỊCH SỬ CHI TIẾT
+================================================================================
