@@ -295,6 +295,21 @@ object SmartClipboardManager {
         if (_items.isEmpty()) return ""
         val item = _items.removeAt(0)
         updateHistoryFlow()
+
+        // Tự động đẩy mục tiếp theo (NEXT) lên hệ thống clipboard giống app gốc
+        if (_items.isNotEmpty() && context != null) {
+            try {
+                val nextText = _items.first().text
+                lastSyncedRawText = nextText
+                val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                val clip = ClipData.newPlainText("Smart Clipboard Next", nextText)
+                cm?.setPrimaryClip(clip)
+                LogRepository.info("SmartClipboard", "➔ Đã tự động đẩy NEXT lên clipboard: '$nextText'")
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+
         return item.text
     }
 
